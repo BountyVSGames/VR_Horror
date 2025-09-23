@@ -38,8 +38,6 @@ class VR_HORROR_Y3_API AInteractPlayer : public AVRCharacter
 public:
 	GENERATED_BODY()
 
-	AInteractPlayer();
-
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent);
 
 	//Sets the player's movement mode
@@ -154,9 +152,6 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Category = "Input|Movement|Variables")
 	FVector LerpDashTarget;
 
-	UFUNCTION(BlueprintCallable)
-	void UpdateRotation(USkeletalMeshComponent* hand, FRotator rot);
-
 private:
 	void GripObject(EControllerHand ControllerHand);
 	void StopGrippingObject(EControllerHand ControllerHand);
@@ -175,7 +170,7 @@ private:
 
 	bool bHasRotated = false;
 
-	float GripValue;
+	float GripThresshold;
 
 	AActor* TeleportVisual;
 

@@ -16,7 +16,6 @@ class VR_HORROR_Y3_API UVRValveComponent : public UVRDialComponent
 	
 	public:
 		UVRValveComponent(const FObjectInitializer& ObjectInitializer);
-		~UVRValveComponent();
 
 		// Event triggered on the interfaced object when gripped
 		void OnGrip_Implementation(UGripMotionControllerComponent* GrippingController, const FBPActorGripInformation& GripInformation) override;
@@ -43,10 +42,12 @@ class VR_HORROR_Y3_API UVRValveComponent : public UVRDialComponent
 		
 		bool GetInteractionCompleted();
 	protected:
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VRValveComponent")//, meta = (ClampMin = "0.0", ClampMax = "360.0", UIMin = "0.0", UIMax = "360.0"))
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VRValveComponent")
 			bool RequiredDualHolding;
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VRValveComponent")//, meta = (ClampMin = "0.0", ClampMax = "360.0", UIMin = "0.0", UIMax = "360.0"))
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VRValveComponent")
 			bool IsInteractionOnSelf;
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VRValveComponent")
+			float PercentageRequiredToUnlock;
 		UPROPERTY(EditAnywhere, Category = "VRValveComponent", meta = (EditCondition = "!IsInteractionOnSelf"))
 			class AActor* InteractionObject;
 

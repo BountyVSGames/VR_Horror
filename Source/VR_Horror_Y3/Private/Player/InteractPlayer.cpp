@@ -8,9 +8,6 @@
 #include "NavigationSystem.h"
 #include "Components/CapsuleComponent.h"
 
-AInteractPlayer::AInteractPlayer()
-{};
-
 void AInteractPlayer::BeginPlay()
 {
 	Super::BeginPlay();
@@ -21,18 +18,14 @@ void AInteractPlayer::BeginPlay()
 	if (subSystem)
 	{
 		//Value to determine how far the player needs to press the grip button
-		GripValue = 0.5f;
+		GripThresshold = 0.5f;
 
 		subSystem->AddMappingContext(InteractionMappingContext, 0);
 		subSystem->AddMappingContext(SmoothMappingContext, 0);
 	}
 }
 
-//void Tik
-
-//
 //UTILITY
-//
 void AInteractPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -47,10 +40,7 @@ void AInteractPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	enhancedInputComponent->BindAction(LeftGripAction, ETriggerEvent::Completed, this, &AInteractPlayer::StopInteractLeftController);
 }
 
-//
 //INTERACTION
-//
-
 void AInteractPlayer::InteractLeftController(const FInputActionValue& value)
 {
 	LeftHandGripValue = value.Get<float>();
@@ -79,41 +69,41 @@ void AInteractPlayer::StopInteractRightController()
 
 void AInteractPlayer::Interact(const FInputActionValue& value, EControllerHand ControllerHand)
 {
-	float actualValue = value.Get<float>();
+	const float currentGrip = value.Get<float>();
 
 	switch (ControllerHand)
 	{
 	case EControllerHand::Left:
-		if ((LeftGrippingState == EGrippingState::None) && actualValue >= GripValue)
+		if ((LeftGrippingState == EGrippingState::None) && currentGrip >= GripThresshold)
 		{
 			GripObject(ControllerHand);
 		}
-		else if (LeftGrippingState == EGrippingState::GripAndHold && actualValue < GripValue)
+		else if (LeftGrippingState == EGrippingState::GripAndHold && currentGrip < GripThresshold)
 		{
 			StopGrippingObject(ControllerHand);
 		}
-		else if (LeftGrippingState == EGrippingState::GripNotHold && actualValue < GripValue)
+		else if (LeftGrippingState == EGrippingState::GripNotHold && currentGrip < GripThresshold)
 		{
 			LeftGrippingState = EGrippingState::None;
 		}
 		break;
 	case EControllerHand::Right:
-		if ((RightGrippingState == EGrippingState::None || RightGrippingState == EGrippingState::GripNotHold) && actualValue >= GripValue)
+		if ((RightGrippingState == EGrippingState::None || RightGrippingState == EGrippingState::GripNotHold) && currentGrip >= GripThresshold)
 		{
 			GripObject(ControllerHand);
 		}
-		else if (RightGrippingState == EGrippingState::GripAndHold && actualValue < GripValue)
+		else if (RightGrippingState == EGrippingState::GripAndHold && currentGrip < GripThresshold)
 		{
 			StopGrippingObject(ControllerHand);
 		}
-		else if (RightGrippingState == EGrippingState::GripNotHold && actualValue < GripValue)
+		else if (RightGrippingState == EGrippingState::GripNotHold && currentGrip < GripThresshold)
 		{
 			RightGrippingState = EGrippingState::None;
 		}
 		break;
 	default:
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ERROR: Interaction triggered on neither left or right hand."));
-		UE_LOG(LogTemp, Warning, TEXT("Interaction event triggered by neither hands"));
+		UE_LOG(LogTemp, Error, TEXT("Interaction event triggered by neither hands"));
 	}
 }
 
@@ -138,7 +128,7 @@ void AInteractPlayer::GripObject(EControllerHand ControllerHand)
 		break;
 	default:
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ERROR: Interaction triggered on neither left or right hand."));
-		UE_LOG(LogTemp, Warning, TEXT("Interaction event triggered by neither hands"));
+		UE_LOG(LogTemp, Error, TEXT("Interaction event triggered by neither hands"));
 		return;
 	}
 
@@ -149,11 +139,11 @@ void AInteractPlayer::GripObject(EControllerHand ControllerHand)
 
 	for (int i = 0; i < allOverlappingObjects.Num(); i++)
 	{
-		if (allOverlappingObjects[i]->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass()) 
-			|| allOverlappingObjects[i]->GetAttachmentRootActor()->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass()))
-		{
-			check(allOverlappingObjects[i]);
+		AActor* rootActor = allOverlappingObjects[i]->GetAttachmentRootActor();
 
+		if (allOverlappingObjects[i]->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass()) 
+			|| (rootActor && rootActor->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass())))
+		{
 			switch (ControllerHand)
 			{
 			case EControllerHand::Left:
@@ -166,7 +156,7 @@ void AInteractPlayer::GripObject(EControllerHand ControllerHand)
 				break;
 			default:
 				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ERROR: Interaction triggered on neither left or right hand."));
-				UE_LOG(LogTemp, Warning, TEXT("Interaction event triggered by neither hands"));
+				UE_LOG(LogTemp, Error, TEXT("Interaction event triggered by neither hands"));
 				return;
 			}
 
@@ -204,16 +194,6 @@ void AInteractPlayer::StopGrippingObject(EControllerHand ControllerHand)
 	else
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ERROR: Drop interaction event triggered while not containing a object"));
-		UE_LOG(LogTemp, Warning, TEXT("Drop interaction event triggered while not containing a object"));
+		UE_LOG(LogTemp, Error, TEXT("Drop interaction event triggered while not containing a object"));
 	}
-}
-
-void AInteractPlayer::UpdateRotation(USkeletalMeshComponent* hand, FRotator rot)
-{
-	FQuat handQuat = FQuat(0, 0, 0, 0);
-	FQuat newQuat = FQuat(rot);
-	
-	FQuat result = handQuat * newQuat;
-
-	hand->SetRelativeRotation(result);
 }

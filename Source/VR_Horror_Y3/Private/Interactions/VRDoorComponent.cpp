@@ -14,6 +14,8 @@ UVRDoorComponent::UVRDoorComponent(const FObjectInitializer& ObjectInitializer) 
 
 	LeverReturnTypeWhenReleased = EVRInteractibleLeverReturnType::RetainMomentum;
 	MaxLeverMomentum = 500.f;
+
+	LeverAngleThreshold = 1.f;
 }
 
 void UVRDoorComponent::TickGrip_Implementation(UGripMotionControllerComponent* GrippingController, const FBPActorGripInformation& GripInformation, float DeltaTime)
@@ -22,6 +24,13 @@ void UVRDoorComponent::TickGrip_Implementation(UGripMotionControllerComponent* G
 
 	if (!bIsLocked)
 	{
+		if (!IsValid(ValveComponent))
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ERROR: Valve component has not been set. Make sure SetupDoor is called in blueprint."));
+			UE_LOG(LogTemp, Error, TEXT("Valve component has not been set. Make sure SetupDoor is called in blueprint."));
+			return;
+		}
+
 		if (!ValveComponent->GetInteractionCompleted())
 		{
 			CheckAutoDrop(GrippingController, GripInformation);
@@ -34,8 +43,15 @@ void UVRDoorComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, 
 	UVRLeverComponent::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	if(!bIsLocked)
-	{ 
-		if (CurrentLeverAngle > 1.f)
+	{
+		if (!IsValid(ValveComponent))
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ERROR: Valve component has not been set. Make sure SetupDoor is called in blueprint."));
+			UE_LOG(LogTemp, Error, TEXT("Valve component has not been set. Make sure SetupDoor is called in blueprint."));
+			return;
+		}
+
+		if (CurrentLeverAngle > LeverAngleThreshold)
 		{
 			ValveComponent->SetIsObjectLocked(true);
 		}
@@ -56,6 +72,13 @@ void UVRDoorComponent::OpenDoor()
 }
 void UVRDoorComponent::ForceDoorClose()
 {
+	if (!IsValid(ValveComponent))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ERROR: Valve component has not been set. Make sure SetupDoor is called in blueprint."));
+		UE_LOG(LogTemp, Error, TEXT("Valve component has not been set. Make sure SetupDoor is called in blueprint."));
+		return;
+	}
+
 	ValveComponent->SetIsObjectLocked(true);
 	bDenyGripping = true;
 

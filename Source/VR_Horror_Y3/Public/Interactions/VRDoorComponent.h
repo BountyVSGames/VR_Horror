@@ -45,4 +45,6 @@ public:
 protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VRDoorComponent", meta = (AllowPrivateAccess = "true"))
 	UVRValveComponent* ValveComponent;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "VRDoorComponent", meta = (AllowPrivateAccess = "true"))
+	float LeverAngleThreshold;
 };

@@ -8,19 +8,16 @@ UVRValveComponent::UVRValveComponent(const FObjectInitializer& ObjectInitializer
 {
 	InteractionCompleted = false;
 
-	CompletionPercentage = 0.0f;
+	PercentageRequiredToUnlock = 90.f;
+	CompletionPercentage = 0.f;
 	HandsInteractCounter = 0;
 
-	ClockwiseMaximumDialAngle = 360.0f;
-	CClockwiseMaximumDialAngle = 0.0f;
+	ClockwiseMaximumDialAngle = 360.f;
+	CClockwiseMaximumDialAngle = 0.f;
 	bUseRollover = true;
 
 	RotationScaler = 1.0f;
 	DialRotationAxis = EVRInteractibleAxis::Axis_X;
-}
-UVRValveComponent::~UVRValveComponent()
-{
-
 }
 
 void UVRValveComponent::OnGrip_Implementation(UGripMotionControllerComponent* GrippingController, const FBPActorGripInformation& GripInformation)
@@ -67,7 +64,7 @@ void UVRValveComponent::TickGrip_Implementation(UGripMotionControllerComponent* 
 
 		CompletionPercentage = (CurrentDialAngle / ClockwiseMaximumDialAngle) * 100.0f;
 
-		if (CompletionPercentage >= 90.f && !InteractionCompleted)
+		if (CompletionPercentage >= PercentageRequiredToUnlock && !InteractionCompleted)
 		{
 			InteractionCompleted = true;
 
@@ -79,13 +76,13 @@ void UVRValveComponent::TickGrip_Implementation(UGripMotionControllerComponent* 
 				}
 				else
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Interaction Failed - Self does not implement InteractionInterface"));
+					UE_LOG(LogTemp, Error, TEXT("Interaction Failed - Self does not implement InteractionInterface"));
 					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ERROR: Interaction failed to trigger. Couldn't find InteractionInterface on self."));
 				}
 			}
 			else if (InteractionObject == nullptr && !IsInteractionOnSelf)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Interaction Failed - InteractionObject is not set"));
+				UE_LOG(LogTemp, Error, TEXT("Interaction Failed - InteractionObject is not set"));
 				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ERROR: Interaction failed to trigger. InteractionObject is not set"));
 			}
 			else
@@ -96,15 +93,13 @@ void UVRValveComponent::TickGrip_Implementation(UGripMotionControllerComponent* 
 				}
 				else
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Interaction Failed - InteractionObject does not implement InteractionInterface"));
+					UE_LOG(LogTemp, Error, TEXT("Interaction Failed - InteractionObject does not implement InteractionInterface"));
 					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ERROR: Interaction failed to trigger. Couldn't find InteractionInterface on target object."));
 				}
 			}
 		}
 		else if (CompletionPercentage < 90.f && InteractionCompleted)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Purple, FString::Printf(TEXT("Current state of valve: %f"), CompletionPercentage));
-
 			InteractionCompleted = false;
 		}
 	}
@@ -117,7 +112,7 @@ bool UVRValveComponent::AllowsMultipleGrips_Implementation()
 
 bool UVRValveComponent::GetInteractionCompleted()
 {
-	return (CompletionPercentage >= 90.f);
+	return (CompletionPercentage >= PercentageRequiredToUnlock);
 }
 void UVRValveComponent::SetIsObjectLocked(bool state)
 {
